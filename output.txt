@@ -1,8 +1,8 @@
 Quantum 20
 Switch 2
 process_id	run_time	arrival_time	finish_time		mem_size	mem_start	mem_end
-T1			30			0				98				200			0			0
-T2			60			10				170				100			0			0
-T3			30			15				132				110			0			0
-T4			30			20				148				170			0			0
-T5			2			72				136				50			0			0
+T1			30			0				102				200			0			0
+T2			60			10				179				100			0			0
+T3			30			15				138				110			0			0
+T4			30			20				156				170			0			0
+T5			2			72				143				50			0			0

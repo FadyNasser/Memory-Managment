@@ -42,7 +42,8 @@ int main()
 		}
 		else
 		{
-			ArrivingProcess(processes, current, timestep-1);
+			ArrivingProcess(processes, current, timestep - 2);
+			ArrivingProcess(processes, current, timestep - 1);
 			ArrivingProcess(processes, current, timestep);
 			Switched = false;
 		}
@@ -67,7 +68,7 @@ int main()
 					current.push_back(traverse);
 					temp = Quantum;
 					Way = false;
-					timestep ++;
+					timestep += 2;
 					Switched = true;
 				}
 			}
@@ -83,7 +84,7 @@ int main()
 					output.push_back(current.front());
 					current.pop_front();
 					temp = Quantum;
-					timestep ++;
+					timestep += 2;
 					Switched = true;
 				}
 			}
