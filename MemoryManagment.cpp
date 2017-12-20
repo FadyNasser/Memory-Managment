@@ -42,6 +42,7 @@ int main()
 		}
 		else
 		{
+			ArrivingProcess(processes, current, timestep - 3);
 			ArrivingProcess(processes, current, timestep - 2);
 			ArrivingProcess(processes, current, timestep - 1);
 			ArrivingProcess(processes, current, timestep);
@@ -68,7 +69,10 @@ int main()
 					current.push_back(traverse);
 					temp = Quantum;
 					Way = false;
+					timestep++;
+					cout << "Process switching : started at " << timestep;
 					timestep += 2;
+					cout << ", finished at " << timestep << endl;
 					Switched = true;
 				}
 			}
@@ -81,10 +85,19 @@ int main()
 				else
 				{
 					current.front().finish_time = timestep;
+					cout << "At time " << timestep << " process " << current.front().ID << " Finished";
+					cout << " arrivial " << current.front().arrival_time;
+					cout << " runtime " << current.front().run_time << " run remaining " << current.front().run << endl;
 					output.push_back(current.front());
 					current.pop_front();
 					temp = Quantum;
-					timestep += 2;
+					if (current.size() > 0)
+					{
+						timestep++;
+						cout << "Process switching : started at " << timestep;
+						timestep += 2;
+						cout << ", finished at " << timestep << endl;
+					}
 					Switched = true;
 				}
 			}
