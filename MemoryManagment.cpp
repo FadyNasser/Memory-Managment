@@ -1,26 +1,40 @@
 #include "Header.h"
-int Quantum = 0 , Switch = 0;
-int timestep = 0;
+void PrintingOutput(vector<process> Output); //to print process in output file
+std::ofstream out("log.txt", std::ofstream::out); //out << to out in the log file
+int Quantum = 0, Switch = 0 , timestep = 0;
 
-void PrintingOutput(vector<process> Output);
-void PrintingLog(deque<process> Log);
-
-void ArrivingProcess(vector<process> pro, deque <process> &curr, int time)
+void ArrivingProcess(vector<process> pro, deque <process> &curr, process &check, int time) //check arriced process in a certain time step
 {
 	for (int i = 0; i < pro.size(); i++)
 	{
-		if (pro[i].arrival_time == time)
+		if (pro[i].arrival_time == time) //at the timestep push the process in the deque
 		{
 			curr.push_back(pro[i]);
 		}
+	}
+
+	if (check.ID != curr.front().ID) //to print the queue of the process in each timestep when front process changes
+	{
+		out << "Queue: ";
+		for (int i = 0; i < curr.size(); i++)
+		{
+			out << curr[i].ID;
+			if (i != curr.size() - 1)
+			{
+				out << ", ";
+			}
+		}
+		check = curr.front();
+		out << endl << "Executing process " << curr.front().ID << "	: started at " << timestep;
 	}
 }
 
 int main()
 {
-	vector<process> processes, output; //reciving all processes from input file
-	deque <process> current;
-	ifstream inFile("Processes.txt");
+	vector<process> processes, output; //reciving all processes from input file then put it sorted in outputvector to print it
+	deque <process> current; //the deque of RoundRobin => deque to access any needed element
+	process check; //to check if it is not equal to current front so print queue list
+	ifstream inFile("Processes.txt"); //input file
 	if (inFile.is_open())
 	{
 		processes = read_process(inFile, Quantum, Switch); //return vector of all processes
@@ -29,23 +43,22 @@ int main()
 	{
 		cout << "Unable to open file";
 	}
+	int temp = Quantum; //used if process runtime > quantum
+	bool Way = false; //to continue in the path of runtime > quantum
+	bool Switched = false; //if there is switch so check arrived process in current time step and during switching time
 
-	int temp = Quantum;
-	bool Way = false;
-	bool Switched = false;
-
-	while (output.size() < processes.size())
+	while (output.size() < processes.size()) //run until the output vector equals the original processes vector
 	{
 		if (!Switched)
 		{
-			ArrivingProcess(processes, current, timestep);
+			ArrivingProcess(processes, current,check, timestep);
 		}
 		else
 		{
-			ArrivingProcess(processes, current, timestep - 3);
-			ArrivingProcess(processes, current, timestep - 2);
-			ArrivingProcess(processes, current, timestep - 1);
-			ArrivingProcess(processes, current, timestep);
+			ArrivingProcess(processes, current,check, timestep - 3);
+			ArrivingProcess(processes, current,check, timestep - 2);
+			ArrivingProcess(processes, current,check, timestep - 1);
+			ArrivingProcess(processes, current,check, timestep);
 			Switched = false;
 		}
 
@@ -54,58 +67,57 @@ int main()
 			if (current.front().run > Quantum || Way == true)
 			{
 				Way = true;
-				if (temp > 0)
+				if (temp > 0) 
 				{
+					//decrement the temp (= Quantum) till it equal zero then subtract process remaining runtime by the original Quantum
 					temp--;
 				}
 				else
 				{
 					current.front().run -= Quantum;
-					cout << "At time " << timestep << " process " << current.front().ID << " stopped";
-					cout << " arrivial " << current.front().arrival_time;
-					cout << " runtime " << current.front().run_time << " run remaining " << current.front().run << endl;
+					out << ",	stopped at " << timestep << ", " << current.front().mem_rem << " remaining, memory starts at " << current.front().mem_start << " and ends at " << current.front().mem_end << endl;
 					process traverse = current.front();
 					current.pop_front();
 					current.push_back(traverse);
 					temp = Quantum;
 					Way = false;
 					timestep++;
-					cout << "Process switching : started at " << timestep;
+					out << "Process switching	: started at " << timestep;
 					timestep += 2;
-					cout << ", finished at " << timestep << endl;
+					out << ",	finished at " << timestep << endl;
 					Switched = true;
 				}
 			}
-			else
+			else //runtime < quantium
 			{
-				if (current.front().run > 0)
+				if (current.front().run > 0) 
 				{
 					current.front().run--;
 				}
 				else
 				{
 					current.front().finish_time = timestep;
-					cout << "At time " << timestep << " process " << current.front().ID << " Finished";
-					cout << " arrivial " << current.front().arrival_time;
-					cout << " runtime " << current.front().run_time << " run remaining " << current.front().run << endl;
-					output.push_back(current.front());
+					out << ",	finished at " << timestep << ", memory starts at " << current.front().mem_start << " and ends at " << current.front().mem_end << endl;
+					output.push_back(current.front()); //insert the process in the output vector to print them
 					current.pop_front();
 					temp = Quantum;
-					if (current.size() > 0)
+					if (current.size() > 0) 
 					{
+						//print only if there is reamining process after it
 						timestep++;
-						cout << "Process switching : started at " << timestep;
+						out << "Process switching	: started at " << timestep;
 						timestep += 2;
-						cout << ", finished at " << timestep << endl;
+						out << ",	finished at " << timestep << endl;
 					}
 					Switched = true;
 				}
 			}
 		}
+		//time step is incremented in every cycle
 		timestep++;
 	}
-	//PrintingLog(current);
-	sort(output.begin(), output.end(), by_arrival());
+	out.close(); //close log file
+	sort(output.begin(), output.end(), by_arrival()); //sort vector to output it
 	PrintingOutput(output);
 	system("Pause");
 	return 0;
@@ -123,14 +135,4 @@ void PrintingOutput(vector<process> Output)
 		cout << Output[i].mem_size << "			" << Output[i].mem_start << "			" << Output[i].mem_end << endl;
 	}
 	fclose(fp);
-}
-
-void PrintingLog(deque<process> Log)
-{
-	cout << "Queue: ";
-	for (int i = 0; i < Log.size(); i++)
-	{
-		cout << Log[i].ID << " ";
-	}
-	cout << endl;
 }
