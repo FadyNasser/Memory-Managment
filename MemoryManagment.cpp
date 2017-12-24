@@ -1,37 +1,8 @@
 #include "Header.h"
-void PrintingOutput(vector<process> Output); //to print process in output file
-std::ofstream out("log.txt", std::ofstream::out); //out << to out in the log file
-int Quantum = 0, Switch = 0 , timestep = 0;
-
-void ArrivingProcess(vector<process> pro, deque <process> &curr, process &check, int time) //check arriced process in a certain time step
-{
-	for (int i = 0; i < pro.size(); i++)
-	{
-		if (pro[i].arrival_time == time) //at the timestep push the process in the deque
-		{
-			curr.push_back(pro[i]);
-		}
-	}
-
-	if (check.ID != curr.front().ID) //to print the queue of the process in each timestep when front process changes
-	{
-		out << "Queue: ";
-		for (int i = 0; i < curr.size(); i++)
-		{
-			out << curr[i].ID;
-			if (i != curr.size() - 1)
-			{
-				out << ", ";
-			}
-		}
-		check = curr.front();
-		out << endl << "Executing process " << curr.front().ID << "	: started at " << timestep;
-	}
-}
 
 int main()
 {
-	vector<process> processes, output; //reciving all processes from input file then put it sorted in outputvector to print it
+	vector<process> processes; //reciving all processes from input file then put it sorted in outputvector to print it
 	deque <process> current; //the deque of RoundRobin => deque to access any needed element
 	process check; //to check if it is not equal to current front so print queue list
 	ifstream inFile("Processes.txt"); //input file
@@ -46,6 +17,14 @@ int main()
 	int temp = Quantum; //used if process runtime > quantum
 	bool Way = false; //to continue in the path of runtime > quantum
 	bool Switched = false; //if there is switch so check arrived process in current time step and during switching time
+	bool halting = false;
+	bool noswitch = false;
+	hole temphole;
+	temphole.start = 0;
+	temphole.end = 1023;
+	temphole.oRe = 1;
+	temphole.size = 1024;
+	holes.push_front(temphole);
 
 	while (output.size() < processes.size()) //run until the output vector equals the original processes vector
 	{
@@ -64,7 +43,41 @@ int main()
 
 		if (current.size() > 0)
 		{
-			if (current.front().run > Quantum || Way == true)
+			if (current.front().startedbefore == false) //allocate memory when a new process started wasne't started before
+			{
+				if (get_mem(current) == false) //no space currently avalible for this process
+				{
+					out << ",	halted at " << timestep << " where halt count = "<< current.front().haltcount << " , as there is no current space for it" << endl;
+					if (current.front().haltcount == 5)
+					{
+						out << ",	Terminated at " << timestep << " , as there is no space for it" << endl;
+						current.front().finish_time = timestep;
+						output.push_back(current.front());
+						current.pop_front();
+					}
+					else
+					{
+						process temphalt = current.front();
+						current.pop_front();
+						current.push_back(temphalt);
+					}
+					halting = true;
+				}
+				else
+				{
+					current.front().startedbefore = true;
+					halting = false;
+				}
+			}
+			else
+			{
+				halting = false;
+			}
+		}
+
+		if (current.size() > 0 && halting == false)
+		{
+			if (current.front().run > Quantum || Way == true) 
 			{
 				Way = true;
 				if (temp > 0) 
@@ -75,17 +88,20 @@ int main()
 				else
 				{
 					current.front().run -= Quantum;
-					out << ",	stopped at " << timestep << ", " << current.front().mem_rem << " remaining, memory starts at " << current.front().mem_start << " and ends at " << current.front().mem_end << endl;
-					process traverse = current.front();
-					current.pop_front();
-					current.push_back(traverse);
 					temp = Quantum;
 					Way = false;
-					timestep++;
-					out << "Process switching	: started at " << timestep;
-					timestep += 2;
-					out << ",	finished at " << timestep << endl;
-					Switched = true;
+					if (current.size() > 1) //if there is only 1 process in the memory no need to pop and push again
+					{
+						out << ",	stopped at " << timestep << ", " << current.front().mem_rem << " remaining, memory starts at " << current.front().mem_start << " and ends at " << current.front().mem_end << endl;
+						process traverse = current.front();
+						current.pop_front();
+						current.push_back(traverse);
+						timestep++;
+						out << "Process switching	: started at " << timestep;
+						timestep += 2;
+						out << ",	finished at " << timestep << endl;
+						Switched = true;
+					}
 				}
 			}
 			else //runtime < quantium
@@ -98,6 +114,10 @@ int main()
 				{
 					current.front().finish_time = timestep;
 					out << ",	finished at " << timestep << ", memory starts at " << current.front().mem_start << " and ends at " << current.front().mem_end << endl;
+					
+					//memory merging occurs when process finish only
+					merg_mem(current);
+
 					output.push_back(current.front()); //insert the process in the output vector to print them
 					current.pop_front();
 					temp = Quantum;
@@ -119,20 +139,6 @@ int main()
 	out.close(); //close log file
 	sort(output.begin(), output.end(), by_arrival()); //sort vector to output it
 	PrintingOutput(output);
-	system("Pause");
+	//system("Pause");
 	return 0;
-}
-
-void PrintingOutput(vector<process> Output)
-{
-	FILE *fp = freopen("output.txt", "w", stdout);
-	cout << "Quantum " << Quantum << endl;
-	cout << "Switch " << Switch << endl;
-	cout << "process_id	" << "run_time	" << "arrival_time	" << "finish_time		" << "mem_size	" << "mem_start	" << "mem_end" << endl;
-	for (int i = 0; i < Output.size(); i++)
-	{
-		cout << Output[i].ID << "			" << Output[i].run_time << "			" << Output[i].arrival_time << "				" << Output[i].finish_time << "				";
-		cout << Output[i].mem_size << "			" << Output[i].mem_start << "			" << Output[i].mem_end << endl;
-	}
-	fclose(fp);
 }
