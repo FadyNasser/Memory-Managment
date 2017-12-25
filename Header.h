@@ -104,25 +104,26 @@ void ArrivingProcess(vector<process> pro, deque <process> &curr, process &check,
 	}
 }
 
-bool get_mem(deque <process> &curr)
+bool get_mem(deque <process> &curr)    // Allocate memory for process
 {
 	string ID = curr.front().ID;
 	int space = curr.front().mem_size + 6;
 	int s;
 	int pos;
-	if (space > 1024 || space <= 0) 
+	if (space > 1024 || space <= 0)       // if memory is outside  the range increment the haltcount
 	{
 		curr.front().haltcount ++;
 		return false;
 	}
-	for (pos = 0; pos < 10; pos++) 
+	
+	for (pos = 1; pos < 11; pos++)  // get the most suitable size to the process
 	{
 		if (space == powf(2, pos)) 
 		{
 			s = powf(2, pos);
 			break;
 		}
-		else if ((powf(2, pos) < space) && (powf(2, pos + 1) >= space)) 
+		else if((powf(2, pos) < space) && (powf(2, pos + 1) > space)) 
 		{
 			s = powf(2, pos + 1);
 			break;
@@ -133,9 +134,9 @@ bool get_mem(deque <process> &curr)
 	bool flag = false;
 	std::list<hole>::iterator holepointer;
 	std::list<hole>::iterator iterator = holes.begin();
-	for (int i = 0; i< holes.size(); i++) 
+	for (int i = 0; i< holes.size(); i++)   /// loop over the holes list to get the most suitable hole
 	{
-		if (s <= (*iterator).size && (*iterator).size <= tempsize) 
+		if (s <= (*iterator).size && (*iterator).size <= tempsize)  
 		{
 			temp = *iterator;
 			holepointer = iterator;
@@ -144,24 +145,24 @@ bool get_mem(deque <process> &curr)
 		}
 		iterator++;
 	}
-	if (!flag) 
+	if (!flag)            // if there is no suitable place increase the haltcount
 	{
 		curr.front().haltcount++;
 		return flag;
 	}
-	for (int i = 0; i<10; i++)
+	for (int i = 0; i<10; i++)  // divide the hole until its very near the process's memory
 	{
-		if (s >((temp).size / 2)) 
+		if (s >((temp).size / 2))   //if  need memory isreached and we don't need to divide any more allocate it
 		{
 			temp.pro_id = ID;
 			mem.emplace_back(temp);
 			curr.front().mem_start = temp.start;
 			curr.front().mem_end = temp.end;
-			curr.front().mem_rem = temp.size - curr.front().mem_size;
+			curr.front().mem_rem = temp.size - space;
 			holes.erase(holepointer);
 			return true;
 		}
-		else 
+		else   // divide the memory and update the holes list
 		{
 			hole t1;
 			t1.size = ((temp).size) / 2;
@@ -186,7 +187,7 @@ bool get_mem(deque <process> &curr)
 
 void merg_mem(deque <process> &curr)
 {
-	string id = curr.front().ID;
+	string id = curr.front().ID;  // get the id of the process to 
 	std::list<hole>::iterator iterator = mem.begin();
 	std::list<hole>::iterator it = holes.begin();
 	hole temp;
@@ -195,50 +196,55 @@ void merg_mem(deque <process> &curr)
 
 	for (int i = 0; i < mem.size(); i++) 
 	{
-		if ((*iterator).pro_id == id) 
+		if ((*iterator).pro_id == id)  // get pointer tp the memory at the memory list
 		{
 			break;
 		}
 		iterator++;
 	}
+    bool no_pair;
 
-	while (merg) 
+	while (merg) // loop to merge larger holes
 	{
 		bool first = true;
 		merg = false;
-		if (holes.size() == 0 || (holes.size() == 1 && !first_insert))
+		no_pair=true;
+		
+		if (holes.size() == 0 || (holes.size() == 1 && !first_insert))  
 			break;
 		it = holes.begin();
 
-		for (int i = 0; i < holes.size(); i++) 
-		{
-			if (!first) 
+		for (int i = 0; i < holes.size(); i++)  // loop on all holes list
+		{ 
+			if (!first)  // if first time don not increment the it "iterator to holes "
 			{
 				it++;
 			}
 			first = false;
 
-			if ((*it).start == (*iterator).start)
+			if ((*it).start == (*iterator).start) //  if iterator and it points to the same element 
 				continue;
 
-			if ((*it).size == (*iterator).size) 
+			if ((*it).size == (*iterator).size)  //  if same size check if after or before
 			{
-				if ((*it).end + 1 == (*iterator).start && (*iterator).oRe == 2) 
+				if ((*it).end + 1 == (*iterator).start && (*iterator).oRe == 2)  // check if iterator is the second match to the it 
 				{
 					temp.start = (*it).start;
 					temp.end = (*iterator).end;
+					no_pair=false;
 				}
 
-				else if ((*it).start == (*iterator).end + 1 && (*iterator).oRe == 1) 
+				else if ((*it).start == (*iterator).end + 1 && (*iterator).oRe == 1)  // chech if iterator is the first match to it 
 				{
 					temp.start = (*iterator).start;
 					temp.end = (*it).end;
+					no_pair=false;
 				}
 
-				temp.size = (*iterator).size * 2;
-				int odd_even = temp.start + 1 / temp.size;
+				temp.size = (*iterator).size * 2;                // double the size of the new element 
+				int odd_even = (temp.end + 1) / temp.size;
 
-				if (temp.start == 0 || odd_even % 2 == 0) 
+				if (temp.start == 0 || odd_even % 2 == 1) 
 				{
 					temp.oRe = 1;
 				}
@@ -247,12 +253,13 @@ void merg_mem(deque <process> &curr)
 				{
 					temp.oRe = 2;
 				}
+				if(! no_pair){            // if there is a pair for the element  merg  the two pairs
 				if (first_insert)
 					mem.erase(iterator);
 				holes.push_back(temp);
 				holes.erase(it);
 				if (!first_insert)
-					holes.erase(iterator);
+				holes.erase(iterator);
 				std::list<hole>::iterator iter = holes.begin();
 				advance(iter, holes.size() - 1);
 				iterator = iter;
@@ -260,13 +267,14 @@ void merg_mem(deque <process> &curr)
 				first_insert = false;
 				break;
 			}
+			}
 			else 
 			{
 				merg = false;
 			}
 		}
 
-		if (!merg && first_insert) 
+		if (!merg && first_insert && no_pair)  /// if it's first time to insert and no pairs 
 		{
 			holes.push_back(*iterator);
 			mem.erase(iterator);
@@ -281,6 +289,7 @@ void merg_mem(deque <process> &curr)
 
 void PrintingOutput(vector<process> Output)
 {
+	//Output file
 	FILE *fp = freopen("output.txt", "w", stdout);
 	cout << "Quantum " << Quantum << endl;
 	cout << "Switch " << Switch << endl;

@@ -5,7 +5,7 @@ int main()
 	vector<process> processes; //reciving all processes from input file then put it sorted in outputvector to print it
 	deque <process> current; //the deque of RoundRobin => deque to access any needed element
 	process check; //to check if it is not equal to current front so print queue list
-	ifstream inFile("Processes.txt"); //input file
+	ifstream inFile("input.txt"); //input file
 	if (inFile.is_open())
 	{
 		processes = read_process(inFile, Quantum, Switch); //return vector of all processes
@@ -92,7 +92,7 @@ int main()
 					Way = false;
 					if (current.size() > 1) //if there is only 1 process in the memory no need to pop and push again
 					{
-						out << ",	stopped at " << timestep << ", " << current.front().mem_rem << " remaining, memory starts at " << current.front().mem_start << " and ends at " << current.front().mem_end << endl;
+						out << ",	stopped at " << timestep << ", " << current.front().run << " remaining, memory starts at " << current.front().mem_start << " and ends at " << current.front().mem_end << endl;
 						process traverse = current.front();
 						current.pop_front();
 						current.push_back(traverse);

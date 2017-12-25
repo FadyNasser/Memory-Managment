@@ -1,0 +1,5 @@
+Queue: T1
+Executing process T1	: started at 0,	finished at 10, memory starts at 0 and ends at 511
+Process switching	: started at 11,	finished at 13
+Queue: T2
+Executing process T2	: started at 14,	finished at 34, memory starts at 0 and ends at 255

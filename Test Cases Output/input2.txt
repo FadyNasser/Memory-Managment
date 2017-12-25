@@ -1,0 +1,6 @@
+Quantum		20
+Switch		2
+process_id	run_time	arrival_time	mem_size
+T1		40		0		290
+T2		30		10		200
+T3		10		10		300
